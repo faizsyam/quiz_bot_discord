@@ -17,6 +17,7 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD') # change to automatically detect
 
 bot = commands.Bot(command_prefix='!')
+client = discord.Client()
 
 @bot.event
 async def on_ready():
@@ -33,14 +34,10 @@ async def hello(ctx):
         response = 'Malam gais {0.author.mention}'.format(ctx.message)
     await ctx.send(response)
 
-@bot.command(name='ha')
-async def ha(ctx, orang):
-    response = 'HA APALAGI {orang}'.format(ctx.message)
-    response += '\nditungguin {0.author.mention}'.format(ctx.message)
-    ctx.author.mention
+@bot.command(name='Ohno')
+async def ha(ctx):
+    response = 'Oh no no noo..'
     await ctx.send(response)
-
-
 
 @bot.command()
 async def dm(ctx):
@@ -53,7 +50,7 @@ def background_delay():
 
 # Game settings
 min_players = 3
-round_amount = 2
+round_amount = 3
 score_real = 200
 score_fake = 100
 
@@ -85,7 +82,7 @@ async def play(ctx):
         channel_name[0] = ctx.channel.name
         player_ids.clear()
         player_names.clear()
-        await ctx.send('Permainan dimulai! Silahkan ketik !join untuk bergabung.')
+        await ctx.send('**Permainan dimulai!**\n`Silahkan ketik !join untuk bergabung.`')
         game_state[0] = 1
 
 @bot.command(name='join')
@@ -95,11 +92,16 @@ async def join(ctx):
             player_names.append(ctx.author.mention) # id, mention
             player_ids.append(ctx.author.id)
             await ctx.send(ctx.author.mention + " berhasil join!")
-            response = 'Daftar Pemain:'
+            response = ''
             for i,ply in enumerate(player_names):
                 response+='\n' + str(i+1) + ". "
                 response+=ply
-            await ctx.send(response)
+            embed = discord.Embed(
+                title = 'Daftar Pemain:',
+                description = response,
+                colour = discord.Colour.blue()
+            )
+            await ctx.send(embed=embed)
         else:
             await ctx.send('Maaf ' + ctx.author.mention + ", anda telah join.")
 
@@ -119,11 +121,16 @@ async def start(ctx):
             for ply in player_names:
                 score.append(0)
 
-            response = 'Score: '
-            for i,ply in enumerate(player_names):
-                response+='\n' + str(i+1) + ". "
-                response+=ply+': '+str(score[i])
-            await ctx.send(response)
+            response = ''
+            for j,ply in enumerate(player_names):
+                response+='\n' + str(j+1) + ". "
+                response+=ply+': '+str(score[j])
+            embed = discord.Embed(
+                title = 'Score:',
+                description = response,
+                colour = discord.Colour.blue()
+            )
+            await ctx.send(embed=embed)
 
             player_answered.clear()
             player_answers.clear()
@@ -135,15 +142,21 @@ async def start(ctx):
 
             ply = player_names[player_turn[0]]
             current_player[0] = [player_turn[0],ply]
-            await ctx.send('------------------------------------------------')
-            await ctx.send("Ronde " + str(round[0]) + ": Pertanyaan untuk "+ ply)
+            await ctx.send("---------------------------------------------------")
+            await ctx.send("**Ronde " + str(round[0]) + ":** Pertanyaan untuk "+ ply)
             random_number = random.randrange(len(list_pertanyaan))
             while random_number in player_questions[player_turn[0]]:
                 random_number = random.randrange(len(list_pertanyaan))
             player_questions[player_turn[0]].append(random_number)
             pertanyaan = list_pertanyaan[random_number]
-            await ctx.send('**' + pertanyaan + '**')
-            await ctx.send('Ketik !jawab untuk memasukkan jawaban anda.')
+            # await ctx.send('**' + pertanyaan + '**')
+            embed = discord.Embed(
+                title = '**' + pertanyaan + '**',
+                colour = discord.Colour.blue()
+            )
+            await ctx.send(embed=embed)
+            await ctx.send('`Ketik !jawab untuk memasukkan jawaban anda.`')
+
             all_answered[0] = False
                         
 
@@ -156,11 +169,11 @@ async def jawab(ctx):
 async def a(ctx, *jawaban):
     if (game_state[0] == 2) & (ctx.author.id in player_ids):
         if isinstance(ctx.channel,discord.DMChannel):
-            for i,name in enumerate(player_names):
-                if name == ctx.author.mention:
+            for i,id in enumerate(player_ids):
+                if id == ctx.author.id:
                     if i not in player_answered:
                         player_answered.append(i)
-                    player_answers[i] = ' '.join(jawaban)
+                    player_answers[i] = ' '.join(jawaban).capitalize()
             await ctx.send('Jawaban diterima.')
             if len(player_answered) == len(player_names):
                 game_state[0] = 3
@@ -178,11 +191,17 @@ async def a(ctx, *jawaban):
                                         t.append(player_answers[a])
                                         answers_temp.append(t)
                                 random.shuffle(answers_temp)
-                                response = 'Mari kita lihat semua jawaban kalian.'
+                                response = ''
                                 for j,a in enumerate(answers_temp):
-                                    response += '\n' + str(j+1)+ '. ' + answers_temp[j][1]
-                                await guild.text_channels[i].send(response)       
-                                await guild.text_channels[i].send('Silahkan kalian tebak jawaban mana yang merupakan jawabannya ' + current_player[0][1] + '\nKetik !tebak untuk menebak.')
+                                    response += '\n`' + str(j+1)+ '`  ' + answers_temp[j][1]
+                                embed = discord.Embed(
+                                    title = 'Mari kita lihat semua jawaban kalian.',
+                                    description = response,
+                                    colour = discord.Colour.blue()
+                                )
+                                await guild.text_channels[i].send(embed=embed)
+                                # await guild.text_channels[i].send(response)       
+                                await guild.text_channels[i].send('Silahkan kalian tebak jawaban mana yang merupakan jawabannya ' + current_player[0][1] + '\n`Ketik !tebak untuk menebak.`')
                                 all_answered[0] = False
                                 player_answered.clear()
                                 player_guesses.clear()
@@ -201,7 +220,7 @@ async def tebak(ctx):
             await ctx.author.send("Masukkan tebakan anda disini. Awali jawaban dengan !g, diikiti oleh nomor tebakan. (Misalkan: !g 1)") 
             response = 'Berikut list jawaban:'
             for j,a in enumerate(answers_temp):
-                response += '\n' + str(j+1)+ '. ' + answers_temp[j][1]
+                response += '\n`' + str(j+1)+ '`  ' + answers_temp[j][1]
             await ctx.author.send(response)
 
 def wait():
@@ -213,7 +232,7 @@ def wait():
 async def g(ctx, tebakan: int):
     if (game_state[0] == 3) & (ctx.author.id in player_ids):
         if isinstance(ctx.channel,discord.DMChannel):
-            if ctx.author.mention == current_player[0][1]:
+            if ctx.author.id == player_ids[current_player[0][0]]:
                 await ctx.author.send("Anda tidak bisa menebak.") 
                 return 0
 
@@ -221,8 +240,8 @@ async def g(ctx, tebakan: int):
                 await ctx.send('Tebakan di luar jangkauan. Coba lagi.')
                 return 0
 
-            for i,name in enumerate(player_names):
-                if name == ctx.author.mention:
+            for i,id in enumerate(player_ids):
+                if id == ctx.author.id:
                     if answers_temp[tebakan-1][0]==i:
                         await ctx.send('Anda tidak bisa memilih jawaban sendiri. Coba lagi.')
                         return 0
@@ -244,10 +263,15 @@ async def g(ctx, tebakan: int):
                                     if answers_temp[j][0] != current_player[0][0]:
                                         wait()
                                         response = '**Jawaban dari ' + player_names[answers_temp[j][0]] + "**"
-                                        response += '\n' + str(j+1) + '. ' + answers_temp[j][1]
-                                        await guild.text_channels[i].send(response)
+                                        response += '\n`' + str(j+1) + '`  ' + answers_temp[j][1]
+                                        # await guild.text_channels[i].send(response)
+                                        embed = discord.Embed(
+                                            description = response,
+                                            colour = discord.Colour.red()
+                                        )
+                                        await guild.text_channels[i].send(embed=embed)
                                         wait()
-                                        response = 'Pemain yang menebak: ['
+                                        response = '> Pemain yang menebak: ['
                                         count = 0
                                         for k,guess in enumerate(player_guesses):
                                             if guess == answers_temp[j][0]:
@@ -262,11 +286,17 @@ async def g(ctx, tebakan: int):
                                     else:
                                         jt = j
                                 wait()
-                                response = '**Jawaban yang BENAR**\n'
-                                response += str(jt+1) + '. ' + answers_temp[jt][1]
-                                await guild.text_channels[i].send(response)
+                                response = '**Jawaban yang BENAR**\n`'
+                                response += str(jt+1) + '`  ' + answers_temp[jt][1]
+                                
+                                score[answers_temp[jt][0]] += count*score_real
+                                embed = discord.Embed(
+                                    description = response,
+                                    colour = discord.Colour.green()
+                                )
+                                await guild.text_channels[i].send(embed=embed)
                                 wait()
-                                response = '\nPemain yang menebak: ['
+                                response = '\n> Pemain yang menebak: ['
                                 count = 0
                                 correct_players = []
                                 for k,guess in enumerate(player_guesses):
@@ -278,18 +308,22 @@ async def g(ctx, tebakan: int):
                                         score[k]+=score_real
                                         count+=1
                                 response += ']'
-                                score[answers_temp[jt][0]] += count*score_real
                                 await guild.text_channels[i].send(response)
                                 await guild.text_channels[i].send('Score ' + player_names[answers_temp[jt][0]] + ' +' + str(count*score_real))
                                 for k in correct_players:
                                     await guild.text_channels[i].send('Score ' + player_names[k] + ' +' + str(score_real))
                                 wait()
-                                await guild.text_channels[i].send('------------------------------------------------')
-                                response = 'Score: '
+                                response = ''
                                 for j,ply in enumerate(player_names):
                                     response+='\n' + str(j+1) + ". "
                                     response+=ply+': '+str(score[j])
-                                await guild.text_channels[i].send(response)
+                                embed = discord.Embed(
+                                    title = 'Score:',
+                                    description = response,
+                                    colour = discord.Colour.blue()
+                                )
+                                await guild.text_channels[i].send(embed=embed)
+                                # await guild.text_channels[i].send(response)
 
                                 player_turn[0]+=1
                                 if player_turn[0]>=len(player_names):
@@ -297,7 +331,6 @@ async def g(ctx, tebakan: int):
                                     round[0]+=1
                                     if round[0]>round_amount:
                                         game_state[0] = 0
-                                        await guild.text_channels[i].send('------------------------------------------------')
                                         await guild.text_channels[i].send('Permainan selesai!') # Ranking
                                         scoresorted = score.copy()
                                         scoresorted.sort(reverse=True)
@@ -323,8 +356,8 @@ async def g(ctx, tebakan: int):
 
                                 ply = player_names[player_turn[0]]
                                 current_player[0] = [player_turn[0],ply]
-                                await guild.text_channels[i].send('------------------------------------------------')
-                                await guild.text_channels[i].send("Ronde " + str(round[0]) + ": Pertanyaan untuk "+ ply)
+                                await guild.text_channels[i].send("---------------------------------------------------")
+                                await guild.text_channels[i].send("**Ronde " + str(round[0]) + ":** Pertanyaan untuk "+ ply)
 
                                 random_number = random.randrange(len(list_pertanyaan))
                                 while random_number in player_questions[player_turn[0]]:
@@ -332,8 +365,15 @@ async def g(ctx, tebakan: int):
                                 player_questions[player_turn[0]].append(random_number)
                                 pertanyaan = list_pertanyaan[random_number]
 
-                                await guild.text_channels[i].send('**' + pertanyaan + '**')
-                                await guild.text_channels[i].send('Ketik !jawab untuk memasukkan jawaban anda.')
+                                # await guild.text_channels[i].send('**' + pertanyaan + '**')
+
+                                embed = discord.Embed(
+                                    title = '**' + pertanyaan + '**',
+                                    colour = discord.Colour.blue()
+                                )
+                                await guild.text_channels[i].send(embed=embed)
+                                await guild.text_channels[i].send('`Ketik !jawab untuk memasukkan jawaban anda.`')
+
                                 all_answered[0] = False
         else:
             response = 'Oh no no. Silahkan masukkan tebakan di DM! {0.author.mention}'.format(ctx.message)
@@ -341,11 +381,12 @@ async def g(ctx, tebakan: int):
 
 @bot.command(name='belum') 
 async def belum(ctx):
-    if (game_state[0] == 2) & (ctx.author.id in player_ids):
+    if (game_state[0] >= 2) & (game_state[0] <= 3) & (ctx.author.id in player_ids):
         response = 'Pemain yang belum memberi jawaban: ['
         count = 0
         for i in range(len(player_names)):
-            if i not in player_answered:
+            flag = (game_state[0]==3) & (i==current_player[0][0])
+            if (i not in player_answered) & (not flag):
                 if count > 0:
                     response += ', '
                 response += player_names[i]

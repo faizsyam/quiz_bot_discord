@@ -53,9 +53,11 @@ list_pertanyaan = [
     'Siapa nama dosen favoritmu selama masa perkuliahan?',
     'Apa nama film anime yang paling kamu sukai?',
     'Apa mata kuliah favoritmu selama kuliah?',
+    'Apa mata kuliah yang paling TIDAK kamu suka selama kuliah?',
     'Tiga kata apa yang mewakili pasangan idamanmu?',
     'Apa acara TV favoritmu?',
-    'Teori konspirasi apa yang paling kamu percayai?'
+    'Teori konspirasi apa yang paling kamu percayai?',
+    'Film apa yang pertama kali tonton di bioskop?'
 ]
 
 

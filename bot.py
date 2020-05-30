@@ -74,6 +74,10 @@ all_answered = [False]
 
 #---------------------------------------------------------------------------------
 
+@bot.command(name='howto')
+async def howto(ctx):
+    await ctx.send('nanti kita ganti2an dikasi pertanyaan\nterus harus dijawab jujur\npemain lain juga menjawab kira2 apa yg akan dijawab pemain yang ditanya\nterus nanti ada daftar jawaban\nnah kita harus nebak jawaban mana yang asli\nkalau berhasil jawab yang asli,yang nebak sama pemain yang ditanya dapat poin\nkalau dapat jawaban yang salah, pemain yang bikin jawabannya dapat score')
+
 @bot.command(name='create')
 async def play(ctx):
     if game_state[0] != 0:
@@ -287,9 +291,6 @@ async def g(ctx, tebakan: int):
                                         jt = j
                                 wait()
                                 response = '**Jawaban yang BENAR**\n`'
-                                response += str(jt+1) + '`  ' + answers_temp[jt][1]
-                                
-                                score[answers_temp[jt][0]] += count*score_real
                                 embed = discord.Embed(
                                     description = response,
                                     colour = discord.Colour.green()
@@ -309,6 +310,7 @@ async def g(ctx, tebakan: int):
                                         count+=1
                                 response += ']'
                                 await guild.text_channels[i].send(response)
+                                score[answers_temp[jt][0]] += count*score_real
                                 await guild.text_channels[i].send('Score ' + player_names[answers_temp[jt][0]] + ' +' + str(count*score_real))
                                 for k in correct_players:
                                     await guild.text_channels[i].send('Score ' + player_names[k] + ' +' + str(score_real))

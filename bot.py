@@ -23,6 +23,11 @@ client = discord.Client()
 async def on_ready():
     print('Ready To Go!')
 
+@bot.command(name='kecewa')
+async def kecewa(ctx, *args):
+    s = ' '.join(args)
+    await ctx.send('-play kecewa (' + s + ' mengecewakan)')
+
 @bot.command(name='hello')
 async def hello(ctx):
     if isinstance(ctx.channel,discord.DMChannel):
@@ -31,36 +36,36 @@ async def hello(ctx):
         response = 'ID: ' + str(ctx.author.id)
 
     else:
-        response = 'Malam gais {0.author.mention}'.format(ctx.message)
+        response = 'Pagi bois {0.author.mention}'.format(ctx.message)
     await ctx.send(response)
 
 @bot.command(name='ohno')
 async def ohno(ctx):
-    if ctx.author.id in player_ids:
-        for i in player_ids:
-            if i==ctx.author.id:
+    if (ctx.author.id in player_ids) & (game_state[0]>=2):
+        found = False
+        for i,pid in enumerate(player_ids):
+            if (pid==ctx.author.id) & (player_lie_streak[i]>=3):
+                found = True
+                await ctx.send('Oh No no.. NoOOooO! 👿👿')
                 break
-        if player_lie_streak[i]>=3:
-            response = 'Oh No no.. NoOOooO! 👿👿'
-        else:
-            response = 'Oh no no noo..'
+        if not found:
+            await ctx.send('Oh no no noo..')
     else:
-        response = 'Oh no no noo..'
-    await ctx.send(response)
+        await ctx.send('Oh no no noo..')
 
 @bot.command(name='ohyes')
 async def ohyes(ctx):
-    if ctx.author.id in player_ids:
-        for i in player_ids:
-            if i==ctx.author.id:
+    if (ctx.author.id in player_ids) & (game_state[0]>=2):
+        found = False
+        for i,pid in enumerate(player_ids):
+            if (pid==ctx.author.id) & (player_streak[i]>=3):
+                found = True
+                await ctx.send('OWwW YEaAAAH! 🔥🔥🔥')
                 break
-        if player_streak[i]>=3:
-            response = 'OWwW YEaAAAH! 🔥🔥🔥'
-        else:
-            response = 'Oh yes yes yess..'
+        if not found:
+            await ctx.send('Oh yes yes yess..')
     else:
-        response = 'Oh yes yes yess..'
-    await ctx.send(response)
+        await ctx.send('Oh yes yes yess..')
 
 @bot.command(name='ha')
 async def ha(ctx):
@@ -77,8 +82,8 @@ def background_delay():
 #---------------------------------------------------------------------------------
 
 # Game settings
-min_players = 2
-round_amount = 20
+min_players = 3
+round_amount = 3
 score_real = 200
 score_fake = 100
 score_streak = 50
@@ -108,6 +113,20 @@ all_answered = [False]
 
 #---------------------------------------------------------------------------------
 
+@bot.command(name='cancel')
+async def cancel(ctx):
+    await ctx.send('Maaf om, belum dibikin cancel nya :) {0.author.mention}'.format(ctx.message))
+
+@bot.command(name='leave')
+async def leave(ctx):
+    await ctx.send('YOU CAN NEVER LEAVE! {0.author.mention}'.format(ctx.message))
+    # if (game_state[0]==1) & 
+    #     await ctx.send('YOU CAN NEVER LEAVE! {0.author.mention}'.format(ctx.message))
+    #     wait()
+    #     response = 'Just kidding. {0.author.mention} '.format(ctx.message)
+
+    #     await ctx.send(response)
+
 @bot.command(name='howto')
 async def howto(ctx):
     await ctx.send('nanti kita ganti2an dikasi pertanyaan\nterus harus dijawab jujur\npemain lain juga menjawab kira2 apa yg akan dijawab pemain yang ditanya\nterus nanti ada daftar jawaban\nnah kita harus nebak jawaban mana yang asli\nkalau berhasil jawab yang asli,yang nebak sama pemain yang ditanya dapat poin\nkalau dapat jawaban yang salah, pemain yang bikin jawabannya dapat score')
@@ -118,6 +137,7 @@ async def play(ctx):
         await ctx.send('Permainan syudah dibikin boskuu. Silahkan ketik !join untuk bergabung')
     else:
         channel_name[0] = ctx.channel.name
+        # guild_name  
         player_ids.clear()
         player_names.clear()
         await ctx.send('**Permainan dimulai!**\n`Silahkan ketik !join untuk bergabung.`')
@@ -149,7 +169,6 @@ async def start(ctx):
         if len(player_names) < min_players:
             await ctx.send('Maaf bro, jumlah pemain masih kurang. Minimal ' + str(min_players) + ' orang.')
         else :
-            game_state[0] = 2
 
             round[0] = 1
             player_turn[0] = 0
@@ -181,6 +200,8 @@ async def start(ctx):
                 player_answers.append(-1)
                 player_streak.append(0)
                 player_lie_streak.append(0)
+
+            game_state[0] = 2
 
             ply = player_names[player_turn[0]]
             current_player[0] = [player_turn[0],ply]
@@ -319,11 +340,12 @@ async def a(ctx, *jawaban):
                                                 player_streak[k]=0
                                                 count+=1
                                         response += ']'
+                                        lost_streak = False
                                         if count>0:
                                             player_lie_streak[answers_temp[j][0]]+=1
                                         else:
                                             if player_lie_streak[answers_temp[j][0]]>=3:
-                                                await guild.text_channels[i].send('Ohno ' + player_names[k] + ' kehilangan LYING streak. 🐵')
+                                                lost_streak = True
                                             player_lie_streak[answers_temp[j][0]] = 0
                                         score[answers_temp[j][0]] += count*score_fake
                                         await guild.text_channels[i].send(response)
@@ -332,6 +354,8 @@ async def a(ctx, *jawaban):
                                             score[answers_temp[j][0]] += (player_lie_streak[answers_temp[j][0]]-2)*score_lie_streak
                                             response += ' +' + str((player_lie_streak[answers_temp[j][0]]-2)*score_lie_streak) + ' (lie streak)'
                                         await guild.text_channels[i].send(response)
+                                        if lost_streak:
+                                            await guild.text_channels[i].send('Ohno ' + player_names[answers_temp[j][0]] + ' kehilangan LYING streak. 🐵')
                                         if player_lie_streak[answers_temp[j][0]] >= 3:
                                             if player_lie_streak[answers_temp[j][0]] == max_streak:
                                                 player_lie_streak[answers_temp[j][0]] = 0
@@ -423,6 +447,12 @@ async def a(ctx, *jawaban):
                                                     response += '#' + str(j+1) + ' ' + player_names[k]
                                                     if j<3:
                                                         response += '**'
+                                                        if j==0:
+                                                            response+=' 🥇'
+                                                        elif j==1:
+                                                            response+=' 🥈'
+                                                        else:
+                                                            response+=' 🥉'
                                                     await guild.text_channels[i].send(response)
                                                     score[k] = -1
                                                     break
